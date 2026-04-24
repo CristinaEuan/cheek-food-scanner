@@ -12,6 +12,7 @@ function Camera() {
   const [camaraActiva, setCamaraActiva] = useState(false)
   const [analizando, setAnalizando] = useState(false)
   const [error, setError] = useState('')
+  const [alimentoEscrito, setAlimentoEscrito] = useState('')
   const navigate = useNavigate()
   const { addEntry } = useHistory()
 
@@ -52,14 +53,24 @@ function Camera() {
 
   const repetirFoto = useCallback(() => {
     setFoto(null)
+    setAlimentoEscrito('')
     activarCamara()
   }, [activarCamara])
 
   const analizarFoto = useCallback(async () => {
+    if (!alimentoEscrito.trim()) {
+      setError('❌ Por favor escribe el nombre del alimento antes de analizar.')
+      return
+    }
     setAnalizando(true)
     setError('')
     try {
-      const resultado = await analizarImagen(foto)
+     const resultado = await analizarImagen(alimentoEscrito)
+      if (!resultado.exito) {
+        setError('❌ No se reconoció ese alimento. Intenta con otro nombre.')
+        setAnalizando(false)
+        return
+      }
       const entrada = {
         id: Date.now(),
         imagen: foto,
@@ -78,7 +89,7 @@ function Camera() {
     } finally {
       setAnalizando(false)
     }
-  }, [foto, addEntry, navigate])
+  }, [foto, alimentoEscrito, addEntry, navigate])
 
   return (
     <div style={{ minHeight: '100vh', background: '#f0f4f8' }}>
@@ -158,6 +169,37 @@ function Camera() {
                 marginBottom: '16px'
               }}
             />
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '16px',
+              textAlign: 'left'
+            }}>
+              <label style={{
+                fontWeight: '600',
+                fontSize: '14px',
+                color: '#1a1a2e',
+                display: 'block',
+                marginBottom: '8px'
+              }}>
+                ¿Qué alimento es?
+              </label>
+              <input
+                type="text"
+                value={alimentoEscrito}
+                onChange={e => setAlimentoEscrito(e.target.value)}
+                placeholder="Ej: manzana, tacos, pizza..."
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  border: '1px solid #ddd',
+                  fontSize: '14px',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button
                 onClick={repetirFoto}
